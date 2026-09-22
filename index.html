@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Read. Earn. Build.</title>
+<meta name="description" content="Reading reward tracker: every finished book earns points toward PC parts.">
+<meta name="theme-color" content="#1b2f57">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Read Earn Build">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  box-sizing:border-box;
+  --bg:#eaf2fb; --panel:#ffffff; --ink:#172742; --muted:#5e6d85; --line:#d3dfee;
+  --navy:#1b2f57; --sky:#2f6fb3; --gold:#ffcc33; --gold-ink:#5a4200;
+  --t1:#7a8aa0; --t2:#4f9aa8; --t5:#5aa864; --t10:#2e8b57; --t20:#2f6fb3; --t40:#6a3fa0; --t70:#e07b1a; --t100:#c8402c;
+  --road:#3a3f4b; --dash:#f6e9a8; --grass:#9fd48a;
+  --shadow:0 6px 0 #c9d6e8;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#0f1a2e; --panel:#182642; --ink:#f1f5fb; --muted:#9fb0c9; --line:#2b3d61;
+  --navy:#0b1730; --grass:#3f7a45; --shadow:0 6px 0 #0a1224;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1a2e; --panel:#182642; --ink:#f1f5fb; --muted:#9fb0c9; --line:#2b3d61;
+  --navy:#0b1730; --grass:#3f7a45; --shadow:0 6px 0 #0a1224;
+}
+*{box-sizing:border-box}
+html{background:var(--navy)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Fredoka","Nunito","Segoe UI",system-ui,sans-serif;font-size:17px;line-height:1.4;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+main{max-width:640px;margin:0 auto;padding:0 16px calc(48px + env(safe-area-inset-bottom,0px))}
+
+/* hero */
+.hero{background:var(--navy);color:#fff;margin:0 -16px;padding:calc(22px + env(safe-area-inset-top,0px)) 20px 26px;border-radius:0 0 28px 28px;position:relative}
+.hero h1{margin:0;font-size:30px;font-weight:700;letter-spacing:.5px;line-height:1}
+.hero .sub{margin:6px 0 18px;color:#c7d6ee;font-size:15px}
+.score{display:flex;align-items:flex-end;gap:14px}
+.score .num{font-size:72px;font-weight:700;line-height:.9;color:var(--gold)}
+.score .of{font-size:18px;color:#c7d6ee;padding-bottom:8px}
+.score .of b{color:#fff;font-size:22px}
+.next{margin-top:10px;font-size:16px;color:#e3ebf7}
+.next b{color:var(--gold)}
+.modebtn{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:16px;border:2px solid #4a6390;background:transparent;color:#c7d6ee;font:inherit;font-size:14px;font-weight:600;border-radius:999px;padding:8px 14px;min-height:44px;cursor:pointer}
+.modebtn.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+
+/* track */
+.track-wrap{margin:-14px -16px 0;padding:0 8px}
+svg.track{width:100%;height:auto;display:block}
+.flag-lbl{font-family:inherit;font-weight:600;font-size:11px;fill:var(--ink)}
+.flag-pts{font-family:inherit;font-weight:700;font-size:10px;fill:var(--muted)}
+.car{transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+
+/* panels */
+section{background:var(--panel);border-radius:18px;padding:18px;margin-top:16px;box-shadow:var(--shadow)}
+section.parent-only{display:none}
+body.parent section.parent-only{display:block}
+h2{margin:0 0 12px;font-size:21px;font-weight:700}
+.muted{color:var(--muted);font-size:14px}
+
+/* milestones */
+.ms{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.ms:first-of-type{border-top:0}
+.ms .box{width:34px;height:34px;border-radius:10px;border:3px solid var(--line);display:grid;place-items:center;font-size:18px;flex:none;color:transparent}
+.ms.done .box{background:var(--t10);border-color:var(--t10);color:#fff}
+.ms .name{font-weight:600;flex:1}
+.ms .name small{display:block;color:var(--muted);font-weight:400;font-size:13px}
+.ms .at{font-weight:700;color:var(--muted);white-space:nowrap}
+.ms.done .at{color:var(--t10)}
+.ms.nextup .at{color:var(--sky)}
+
+/* form */
+label{display:block;font-weight:600;margin:12px 0 6px}
+input[type=text],input[type=password]{width:100%;font:inherit;font-size:18px;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+input:focus{outline:3px solid var(--gold);border-color:var(--gold)}
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tier{border:0;border-radius:14px;padding:10px 4px;min-height:56px;color:#fff;font:inherit;font-weight:700;font-size:20px;cursor:pointer;opacity:.45;transform:scale(.96);transition:transform .15s,opacity .15s}
+.tier small{display:block;font-size:10px;font-weight:600;opacity:.95}
+.tier.on{opacity:1;transform:scale(1.04);outline:3px solid var(--gold)}
+.tier:focus-visible{outline:3px solid var(--gold)}
+.t1{background:var(--t1)}.t2{background:var(--t2)}.t5{background:var(--t5)}.t10{background:var(--t10)}.t20{background:var(--t20)}.t40{background:var(--t40)}.t70{background:var(--t70)}.t100{background:var(--t100)}
+.tierhelp{font-size:13px;color:var(--muted);margin-top:8px;min-height:1.2em}
+.check{display:flex;align-items:center;gap:10px;margin-top:12px;font-weight:500;min-height:44px}
+.check input{width:24px;height:24px;accent-color:var(--sky);flex:none}
+.preview{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--bg);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.preview b{font-size:24px;color:var(--sky)}
+.preview .why{font-size:13px;color:var(--muted);text-align:right}
+button.primary{width:100%;margin-top:12px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:700;background:var(--gold);color:var(--gold-ink);cursor:pointer;box-shadow:0 5px 0 #c99a1a}
+button.primary:active{transform:translateY(3px);box-shadow:0 2px 0 #c99a1a}
+button.primary:disabled{opacity:.5;box-shadow:none;cursor:not-allowed}
+button.secondary{border:2px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:16px;font-weight:600;border-radius:12px;padding:10px 14px;min-height:44px;cursor:pointer}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.row>*{flex:1}
+.msg{margin-top:10px;font-weight:600;min-height:1.3em}
+.msg.ok{color:var(--t10)}.msg.warn{color:var(--t70)}
+
+/* week */
+.weekbar{height:14px;border-radius:7px;background:var(--line);overflow:hidden;margin-top:8px}
+.weekbar i{display:block;height:100%;background:var(--sky);width:0;transition:width .4s}
+
+/* log */
+.log{list-style:none;margin:0;padding:0}
+.log li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);min-height:56px}
+.log li:first-child{border-top:0}
+.log .dot{width:12px;height:12px;border-radius:50%;flex:none}
+.log .t{flex:1;min-width:0}
+.log .t span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.log .t small{color:var(--muted);font-size:13px}
+.log .p{font-weight:700;white-space:nowrap}
+.log .del{border:0;background:transparent;color:var(--muted);font-size:22px;cursor:pointer;padding:8px 10px;line-height:1;display:none}
+body.parent .log .del{display:block}
+.log .confirm{display:flex;gap:6px}
+.log .confirm button{border:0;border-radius:10px;padding:8px 12px;font:inherit;font-weight:700;cursor:pointer;min-height:40px}
+.log .confirm .yes{background:var(--t100);color:#fff}
+.log .confirm .no{background:var(--line);color:var(--ink)}
+.empty{color:var(--muted);text-align:center;padding:12px 0}
+.rules{font-size:14px;color:var(--muted);padding-left:18px;margin:0}
+.rules li{margin:4px 0}
+.status{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
+
+/* PIN sheet */
+.sheet{position:fixed;inset:0;background:rgba(10,18,36,.6);display:none;align-items:flex-end;justify-content:center;z-index:10}
+.sheet.open{display:flex}
+.sheet .card{background:var(--panel);color:var(--ink);width:100%;max-width:640px;border-radius:22px 22px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom,0px))}
+.sheet h2{margin-bottom:4px}
+.pinbox{font-size:32px;letter-spacing:12px;text-align:center;margin-top:8px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:12px 18px;border-radius:14px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <h1>Read. Earn. Build.</h1>
+    <div class="sub">Every book earns points. Points build the PC.</div>
+    <button class="modebtn" id="modebtn" type="button">Parent</button>
+    <div class="score"><div class="num" id="total">0</div><div class="of">of <b>1,600</b> points</div></div>
+    <div class="next" id="nextline">Loading…</div>
+  </header>
+
+  <div class="track-wrap" id="trackwrap"></div>
+
+  <section class="parent-only">
+    <h2>Add a book</h2>
+    <label for="title">Book title</label>
+    <input type="text" id="title" placeholder="What did you finish?" autocomplete="off" autocapitalize="words" enterkeyhint="done">
+    <label>How hard was it?</label>
+    <div class="tiers" id="tiers">
+      <button class="tier t1" type="button" data-v="1">1<small>tiny</small></button>
+      <button class="tier t2" type="button" data-v="2">2<small>short</small></button>
+      <button class="tier t5" type="button" data-v="5">5<small>picture</small></button>
+      <button class="tier t10" type="button" data-v="10">10<small>easy</small></button>
+      <button class="tier t20" type="button" data-v="20">20<small>early chapter</small></button>
+      <button class="tier t40" type="button" data-v="40">40<small>chapter</small></button>
+      <button class="tier t70" type="button" data-v="70">70<small>big</small></button>
+      <button class="tier t100" type="button" data-v="100">100<small>giant</small></button>
+    </div>
+    <div class="tierhelp" id="tierhelp"></div>
+    <label class="check"><input type="checkbox" id="bonus"> Stretch bonus — first book from a harder tier (+20)</label>
+    <label class="check"><input type="checkbox" id="report"> Book report given to Dad</label>
+    <div class="preview"><div><div class="muted">This book earns</div><b id="pv">—</b></div><div class="why" id="pvwhy"></div></div>
+    <button class="primary" id="add" type="button" disabled>Add points</button>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <section>
+    <h2>Milestones</h2>
+    <div id="milestones"></div>
+  </section>
+
+  <section>
+    <h2>This week</h2>
+    <div><b id="weekpts">0</b> <span class="muted">of 250 points (resets Monday)</span></div>
+    <div class="weekbar"><i id="weekfill"></i></div>
+  </section>
+
+  <section>
+    <h2>Book log</h2>
+    <ul class="log" id="log"></ul>
+  </section>
+
+  <section>
+    <h2>The rules</h2>
+    <ul class="rules">
+      <li>Finish the book, then give a 2-minute book report: favorite part, what happened, one thing you'd change.</li>
+      <li>Re-reading pays half. A third read or more pays a quarter.</li>
+      <li>Stretch bonus: +20 the first time you finish a book from a harder tier.</li>
+      <li>Reading out loud to Dad counts in full. Audiobooks alone don't count.</li>
+      <li>Max 250 points per week. Hit a milestone and that part goes in the cart.</li>
+    </ul>
+  </section>
+
+  <section class="parent-only">
+    <h2>Backup</h2>
+    <div class="muted">The log lives on this phone only. Save a backup now and then, or move it to another device.</div>
+    <div class="row">
+      <button class="secondary" id="export" type="button">Save backup</button>
+      <button class="secondary" id="import" type="button">Restore backup</button>
+      <input type="file" id="importfile" accept="application/json,.json" hidden>
+    </div>
+    <div class="row"><button class="secondary" id="changepin" type="button">Change parent PIN</button></div>
+  </section>
+  <div class="status" id="status"></div>
+</main>
+
+<div class="sheet" id="pinsheet" role="dialog" aria-modal="true">
+  <div class="card">
+    <h2 id="pintitle">Parent PIN</h2>
+    <div class="muted" id="pinhint">Enter the 4-digit PIN.</div>
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="pinbox" id="pininput" autocomplete="off">
+    <div class="row"><button class="secondary" id="pincancel" type="button">Cancel</button><button class="primary" id="pinok" type="button" style="margin-top:0">OK</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const GOAL = 1600, WEEK_CAP = 250;
+  const MILESTONES = [
+    {at:100,  name:"PC case",            desc:"The box that holds it all"},
+    {at:200,  name:"Power supply",       desc:"Gives the parts electricity"},
+    {at:250,  name:"CPU cooler",         desc:"Peerless Assassin with the screen"},
+    {at:700,  name:"CPU + motherboard",  desc:"Ryzen 7 5800XT + ROG Strix B550-F"},
+    {at:850,  name:"SSD 1TB",            desc:"Where the games live"},
+    {at:1100, name:"Corsair RAM 32GB",   desc:"Helps games run smooth"},
+    {at:1600, name:"Graphics card",      desc:"RX 9060 XT — runs BeamNG, Farming Sim, Roblox"},
+  ];
+  const TIER_COLOR = {1:"#7a8aa0",2:"#4f9aa8",5:"#5aa864",10:"#2e8b57",20:"#2f6fb3",40:"#6a3fa0",70:"#e07b1a",100:"#c8402c"};
+  const TIER_HELP = {
+    1:"Tiny books — board books or a few words per page, read out loud on your own",
+    2:"Short picture books you read yourself — Biscuit, Bob Books, Hop on Pop",
+    5:"Longer picture books or level 1–2 readers — Little Bear, Henry and Mudge, Splat the Cat",
+    10:"Easy readers you read all by yourself — Elephant & Piggie, Pete the Cat, Fly Guy",
+    20:"Early chapter books, ~60–100 pages — Magic Tree House, Dog Man, Owl Diaries",
+    40:"Chapter books, ~100–180 pages — Captain Underpants, Wimpy Kid, The Bad Guys",
+    70:"Big chapter books, ~180–250 pages — The Wild Robot, Charlotte's Web",
+    100:"Giant books, 250+ pages — Harry Potter, Percy Jackson, Narnia"
+  };
+
+  const $ = id => document.getElementById(id);
+  let books = [];          // {id,title,tier,pts,readNum,bonus,ts}
+  let tier = 0;
+
+  /* ---------- storage ---------- */
+  const LS_KEY = "reading-reward-books", PIN_KEY = "reading-reward-pin";
+  const lsGet = (k, d) => { try{ const v = localStorage.getItem(k); return v==null ? d : v; }catch(e){ return d; } };
+  const lsSet = (k, v) => { try{ localStorage.setItem(k, v); return true; }catch(e){ return false; } };
+  function load(){ try{ const a = JSON.parse(lsGet(LS_KEY,"[]")); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function save(){ if(!lsSet(LS_KEY, JSON.stringify(books))) toast("Couldn't save on this device"); }
+
+  /* ---------- helpers ---------- */
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+  function weekStart(d){ const x=new Date(d); const day=(x.getDay()+6)%7; x.setHours(0,0,0,0); x.setDate(x.getDate()-day); return x.getTime(); }
+  const total = () => books.reduce((s,b)=>s+b.pts,0);
+  const weekPts = () => { const ws=weekStart(Date.now()); return books.filter(b=>b.ts>=ws).reduce((s,b)=>s+b.pts,0); };
+  const fmt = n => n.toLocaleString();
+  function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+  let toastTimer;
+  function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove("show"),2500); }
+  const buzz = p => { try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} };
+
+  function computeAward(){
+    if (!tier) return null;
+    const t = norm($("title").value);
+    const readNum = t ? books.filter(b=>norm(b.title)===t).length+1 : 1;
+    const mult = readNum===1?1:readNum===2?.5:.25;
+    let base = Math.round(tier*mult);
+    let bonus = $("bonus").checked ? 20 : 0;
+    let raw = base+bonus;
+    const room = Math.max(0, WEEK_CAP-weekPts());
+    const pts = Math.min(raw, room);
+    let why = readNum===1?"first read":readNum===2?"2nd read · half points":`read #${readNum} · quarter points`;
+    if (bonus) why += " · +20 bonus";
+    if (pts<raw) why += room===0?" · weekly cap reached":" · trimmed to weekly cap";
+    return {pts, readNum, bonus, why};
+  }
+
+  /* ---------- render ---------- */
+  function render(){
+    const tot = total();
+    $("total").textContent = fmt(tot);
+    const next = MILESTONES.find(m=>m.at>tot);
+    $("nextline").innerHTML = next
+      ? `<b>${fmt(next.at-tot)}</b> more points to unlock the <b>${esc(next.name)}</b>`
+      : `<b>You did it!</b> Every part is unlocked. Time to build.`;
+    $("milestones").innerHTML = MILESTONES.map(m=>{
+      const done = tot>=m.at, isNext = next && next.at===m.at;
+      return `<div class="ms ${done?'done':''} ${isNext?'nextup':''}"><div class="box">✓</div><div class="name">${esc(m.name)}<small>${esc(m.desc)}</small></div><div class="at">${done?'unlocked':fmt(m.at)}</div></div>`;
+    }).join("");
+    const wp = weekPts();
+    $("weekpts").textContent = fmt(wp);
+    $("weekfill").style.width = Math.min(100, wp/WEEK_CAP*100)+"%";
+    const sorted = books.slice().sort((a,b)=>b.ts-a.ts);
+    $("log").innerHTML = sorted.length ? sorted.map(b=>{
+      const d = new Date(b.ts).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+      const rn = b.readNum>1?` · read #${b.readNum}`:"";
+      return `<li data-id="${esc(b.id)}"><span class="dot" style="background:${TIER_COLOR[b.tier]||'#888'}"></span><div class="t"><span>${esc(b.title)}</span><small>${d} · ${b.tier}-pt book${rn}${b.bonus?' · bonus':''}</small></div><div class="p">+${b.pts}</div><button class="del" type="button" title="Remove" aria-label="Remove ${esc(b.title)}">×</button></li>`;
+    }).join("") : `<div class="empty">No books yet. Finish one and add it above!</div>`;
+    renderTrack(tot);
+    updatePreview();
+  }
+
+  function renderTrack(tot){
+    const W=640, H=150, x0=34, x1=W-34, roadY=92;
+    const px = v => x0 + (x1-x0)*Math.min(1,v/GOAL);
+    let flags = MILESTONES.map((m,i)=>{
+      const x=px(m.at), done=tot>=m.at, up = i%2===0;
+      const ly = up? roadY-46 : roadY+46;
+      return `<line x1="${x}" y1="${roadY}" x2="${x}" y2="${ly+(up?10:-10)}" stroke="${done?'#2e8b57':'#8a97ad'}" stroke-width="2"/>
+        <text x="${x}" y="${ly+(up?2:6)}" text-anchor="middle" class="flag-lbl" style="fill:${done?'#2e8b57':'var(--ink)'}">${esc(m.name)}</text>
+        <text x="${x}" y="${ly+(up?14:18)}" text-anchor="middle" class="flag-pts">${done?'✓':fmt(m.at)}</text>`;
+    }).join("");
+    const carX = px(tot);
+    const car = `<g class="car" transform="translate(${carX},${roadY})">
+      <rect x="-20" y="-11" width="40" height="15" rx="5" fill="#ffcc33" stroke="#5a4200" stroke-width="2"/>
+      <path d="M-12 -11 L-6 -21 H8 L14 -11 Z" fill="#ffcc33" stroke="#5a4200" stroke-width="2"/>
+      <rect x="-4" y="-19" width="10" height="7" rx="1" fill="#bfe4ff"/>
+      <circle cx="-11" cy="5" r="5" fill="#222" stroke="#5a4200" stroke-width="1.5"/>
+      <circle cx="11" cy="5" r="5" fill="#222" stroke="#5a4200" stroke-width="1.5"/>
+    </g>`;
+    $("trackwrap").innerHTML = `<svg class="track" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Progress track">
+      <rect x="0" y="${roadY-22}" width="${W}" height="44" rx="22" fill="var(--grass)"/>
+      <rect x="${x0-14}" y="${roadY-14}" width="${x1-x0+28}" height="28" rx="14" fill="var(--road)"/>
+      <line x1="${x0}" y1="${roadY}" x2="${x1}" y2="${roadY}" stroke="var(--dash)" stroke-width="3" stroke-dasharray="14 12"/>
+      <line x1="${x0}" y1="${roadY}" x2="${carX}" y2="${roadY}" stroke="#ffcc33" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+      ${flags}${car}
+      <g transform="translate(${x1+4},${roadY-14})"><rect width="10" height="28" fill="#fff"/><rect width="10" height="28" fill="url(#chk)"/></g>
+      <defs><pattern id="chk" width="5" height="5" patternUnits="userSpaceOnUse"><rect width="2.5" height="2.5" fill="#222"/><rect x="2.5" y="2.5" width="2.5" height="2.5" fill="#222"/></pattern></defs>
+    </svg>`;
+  }
+
+  function updatePreview(){
+    const a = computeAward();
+    const ready = a && $("title").value.trim() && $("report").checked && a.pts>0;
+    $("pv").textContent = a ? `+${a.pts}` : "—";
+    $("pvwhy").textContent = a ? a.why : "";
+    $("add").disabled = !ready;
+  }
+
+  /* ---------- parent mode / PIN ---------- */
+  let pinResolve = null;
+  function askPin(title, hint){
+    return new Promise(res=>{
+      pinResolve = res;
+      $("pintitle").textContent = title; $("pinhint").textContent = hint;
+      $("pininput").value = ""; $("pinsheet").classList.add("open");
+      setTimeout(()=>$("pininput").focus(), 50);
+    });
+  }
+  function closePin(v){ $("pinsheet").classList.remove("open"); const r=pinResolve; pinResolve=null; if(r) r(v); }
+  $("pinok").addEventListener("click", ()=>closePin($("pininput").value));
+  $("pincancel").addEventListener("click", ()=>closePin(null));
+  $("pininput").addEventListener("keydown", e=>{ if(e.key==="Enter") closePin($("pininput").value); });
+  const validPin = p => /^\d{4}$/.test(p||"");
+
+  async function setNewPin(){
+    const a = await askPin("Create a parent PIN", "Pick 4 digits. You'll need it to add or remove books.");
+    if (a===null) return false;
+    if (!validPin(a)) { toast("PIN must be 4 digits"); return false; }
+    const b = await askPin("Confirm PIN", "Type the same 4 digits again.");
+    if (b!==a) { toast("PINs didn't match"); return false; }
+    lsSet(PIN_KEY, a); toast("PIN saved"); return true;
+  }
+  async function enterParent(){
+    let pin = lsGet(PIN_KEY, "");
+    if (!validPin(pin)) { if (!(await setNewPin())) return; pin = lsGet(PIN_KEY,""); }
+    else {
+      const a = await askPin("Parent PIN", "Enter the 4-digit PIN.");
+      if (a===null) return;
+      if (a!==pin) { toast("Wrong PIN"); buzz([60,40,60]); return; }
+    }
+    setMode(true);
+  }
+  function setMode(parent){
+    document.body.classList.toggle("parent", parent);
+    $("modebtn").textContent = parent ? "Done" : "Parent";
+    $("modebtn").classList.toggle("on", parent);
+    if (parent) setTimeout(()=>$("title").scrollIntoView({behavior:"smooth",block:"center"}), 50);
+  }
+  $("modebtn").addEventListener("click", ()=>{ document.body.classList.contains("parent") ? setMode(false) : enterParent(); });
+  $("changepin").addEventListener("click", setNewPin);
+
+  /* ---------- events ---------- */
+  $("tiers").addEventListener("click", e=>{
+    const b = e.target.closest(".tier"); if(!b) return;
+    tier = +b.dataset.v;
+    [...$("tiers").children].forEach(x=>x.classList.toggle("on", x===b));
+    $("tierhelp").textContent = TIER_HELP[tier];
+    updatePreview();
+  });
+  ["input","change"].forEach(ev=>{ $("title").addEventListener(ev,updatePreview); $("bonus").addEventListener(ev,updatePreview); $("report").addEventListener(ev,updatePreview); });
+  $("add").addEventListener("click", ()=>{
+    const a = computeAward(); if(!a || a.pts<=0) return;
+    const before = total();
+    const b = { id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), title:$("title").value.trim(), tier, pts:a.pts, readNum:a.readNum, bonus:a.bonus, ts:Date.now() };
+    books.push(b); save();
+    $("msg").className="msg ok"; $("msg").textContent=`+${b.pts} points for "${b.title}"!`;
+    $("title").value=""; $("bonus").checked=false; $("report").checked=false; tier=0;
+    [...$("tiers").children].forEach(x=>x.classList.remove("on")); $("tierhelp").textContent="";
+    render();
+    const unlocked = MILESTONES.filter(m=>m.at>before && m.at<=total());
+    if (unlocked.length){ buzz([80,60,80,60,200]); toast(`🎉 Unlocked: ${unlocked.map(m=>m.name).join(", ")}!`); }
+    else buzz(40);
+    setTimeout(()=>{ $("msg").textContent=""; }, 4000);
+  });
+  $("log").addEventListener("click", e=>{
+    const li = e.target.closest("li[data-id]"); if(!li) return;
+    const id = li.dataset.id;
+    if (e.target.closest(".del")){
+      if (!document.body.classList.contains("parent")) return;
+      const b = books.find(x=>x.id===id); if(!b) return;
+      li.querySelector(".p").style.display="none"; li.querySelector(".del").style.display="none";
+      li.insertAdjacentHTML("beforeend", `<div class="confirm"><button type="button" class="no">Keep</button><button type="button" class="yes">Remove</button></div>`);
+    } else if (e.target.closest(".confirm .yes")){
+      books = books.filter(b=>b.id!==id); save(); render(); toast("Removed");
+    } else if (e.target.closest(".confirm .no")){
+      render();
+    }
+  });
+
+  /* ---------- backup ---------- */
+  $("export").addEventListener("click", ()=>{
+    const blob = new Blob([JSON.stringify({app:"reading-reward",version:1,exported:new Date().toISOString(),books}, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `reading-reward-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  });
+  $("import").addEventListener("click", ()=>$("importfile").click());
+  $("importfile").addEventListener("change", async e=>{
+    const f = e.target.files[0]; if(!f) return;
+    try{
+      const j = JSON.parse(await f.text());
+      const list = Array.isArray(j) ? j : j.books;
+      if (!Array.isArray(list)) throw new Error("bad");
+      const clean = list.filter(b=>b && typeof b.title==="string" && Number.isFinite(b.pts) && Number.isFinite(b.ts))
+        .map(b=>({ id:String(b.id||Date.now().toString(36)+Math.random().toString(36).slice(2,6)), title:b.title, tier:+b.tier||0, pts:Math.round(b.pts), readNum:+b.readNum||1, bonus:b.bonus?20:0, ts:+b.ts }));
+      const byId = new Map(books.map(b=>[b.id,b]));
+      clean.forEach(b=>byId.set(b.id,b));
+      books = [...byId.values()]; save(); render();
+      toast(`Restored ${clean.length} book${clean.length===1?"":"s"}`);
+    }catch(err){ toast("That file isn't a Read. Earn. Build. backup"); }
+    e.target.value = "";
+  });
+
+  /* ---------- boot ---------- */
+  books = load();
+  render();
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  $("status").textContent = standalone ? "Saved on this device." : "Tip: add this page to your home screen to use it like an app.";
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", ()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+  }
+})();
+</script>
+</body>
+</html>
