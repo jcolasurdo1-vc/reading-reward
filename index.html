@@ -83,7 +83,6 @@ input:focus{outline:3px solid var(--gold);border-color:var(--gold)}
 .tier small{display:block;font-size:10px;font-weight:600;opacity:.95}
 .tier.on{opacity:1;transform:scale(1.04);outline:3px solid var(--gold)}
 .tier:focus-visible{outline:3px solid var(--gold)}
-.t1{background:var(--t1)}.t2{background:var(--t2)}.t5{background:var(--t5)}.t10{background:var(--t10)}.t20{background:var(--t20)}.t40{background:var(--t40)}.t70{background:var(--t70)}.t100{background:var(--t100)}
 .tierhelp{font-size:13px;color:var(--muted);margin-top:8px;min-height:1.2em}
 .check{display:flex;align-items:center;gap:10px;margin-top:12px;font-weight:500;min-height:44px}
 .check input{width:24px;height:24px;accent-color:var(--sky);flex:none}
@@ -123,6 +122,19 @@ body.parent .log .del{display:block}
 .rules li{margin:4px 0}
 .status{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
 
+/* settings editor */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input[type=number]{width:100%;font:inherit;font-size:18px;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.edit-list{display:flex;flex-direction:column;gap:8px}
+.edit-row{display:grid;grid-template-columns:76px 1fr 44px;gap:6px;align-items:start}
+.edit-row .lvl{display:flex;align-items:center;gap:8px;font-weight:600;min-height:44px}
+.edit-row .lvl i{width:14px;height:14px;border-radius:50%;flex:none}
+.edit-row input{padding:9px 10px;font-size:16px}
+.edit-row .stack{display:flex;flex-direction:column;gap:4px}
+.edit-row .rm{border:0;background:transparent;color:var(--muted);font-size:22px;min-height:44px;cursor:pointer}
+.edit-row .rm:disabled{opacity:.3}
+.tier.t0{background:var(--t1)}.tier.t1{background:var(--t2)}.tier.t2{background:var(--t5)}.tier.t3{background:var(--t10)}.tier.t4{background:var(--t20)}.tier.t5{background:var(--t40)}.tier.t6{background:var(--t70)}.tier.t7{background:var(--t100)}
+
 /* PIN sheet */
 .sheet{position:fixed;inset:0;background:rgba(10,18,36,.6);display:none;align-items:flex-end;justify-content:center;z-index:10}
 .sheet.open{display:flex}
@@ -140,9 +152,9 @@ body.parent .log .del{display:block}
 <main>
   <header class="hero">
     <h1>Read. Earn. Build.</h1>
-    <div class="sub">Every book earns points. Points build the PC.</div>
+    <div class="sub" id="tagline">Every book earns points. Points build the PC.</div>
     <button class="modebtn" id="modebtn" type="button">Parent</button>
-    <div class="score"><div class="num" id="total">0</div><div class="of">of <b>1,600</b> points</div></div>
+    <div class="score"><div class="num" id="total">0</div><div class="of">of <b id="goal">1,600</b> points</div></div>
     <div class="next" id="nextline">Loading…</div>
   </header>
 
@@ -153,32 +165,23 @@ body.parent .log .del{display:block}
     <label for="title">Book title</label>
     <input type="text" id="title" placeholder="What did you finish?" autocomplete="off" autocapitalize="words" enterkeyhint="done">
     <label>How hard was it?</label>
-    <div class="tiers" id="tiers">
-      <button class="tier t1" type="button" data-v="1">1<small>tiny</small></button>
-      <button class="tier t2" type="button" data-v="2">2<small>short</small></button>
-      <button class="tier t5" type="button" data-v="5">5<small>picture</small></button>
-      <button class="tier t10" type="button" data-v="10">10<small>easy</small></button>
-      <button class="tier t20" type="button" data-v="20">20<small>early chapter</small></button>
-      <button class="tier t40" type="button" data-v="40">40<small>chapter</small></button>
-      <button class="tier t70" type="button" data-v="70">70<small>big</small></button>
-      <button class="tier t100" type="button" data-v="100">100<small>giant</small></button>
-    </div>
+    <div class="tiers" id="tiers"></div>
     <div class="tierhelp" id="tierhelp"></div>
-    <label class="check"><input type="checkbox" id="bonus"> Stretch bonus — first book from a harder tier (+20)</label>
-    <label class="check"><input type="checkbox" id="report"> Book report given to Dad</label>
+    <label class="check"><input type="checkbox" id="bonus"> <span id="bonuslbl">Stretch bonus — first book from a harder level (+20)</span></label>
+    <label class="check"><input type="checkbox" id="report"> <span id="reportlbl">Book report given to Dad</span></label>
     <div class="preview"><div><div class="muted">This book earns</div><b id="pv">—</b></div><div class="why" id="pvwhy"></div></div>
     <button class="primary" id="add" type="button" disabled>Add points</button>
     <div class="msg" id="msg"></div>
   </section>
 
   <section>
-    <h2>Milestones</h2>
+    <h2>Rewards</h2>
     <div id="milestones"></div>
   </section>
 
   <section>
     <h2>This week</h2>
-    <div><b id="weekpts">0</b> <span class="muted">of 250 points (resets Monday)</span></div>
+    <div><b id="weekpts">0</b> <span class="muted" id="weeklbl">of 250 points (resets Monday)</span></div>
     <div class="weekbar"><i id="weekfill"></i></div>
   </section>
 
@@ -189,18 +192,33 @@ body.parent .log .del{display:block}
 
   <section>
     <h2>The rules</h2>
-    <ul class="rules">
-      <li>Finish the book, then give a 2-minute book report: favorite part, what happened, one thing you'd change.</li>
-      <li>Re-reading pays half. A third read or more pays a quarter.</li>
-      <li>Stretch bonus: +20 the first time you finish a book from a harder tier.</li>
-      <li>Reading out loud to Dad counts in full. Audiobooks alone don't count.</li>
-      <li>Max 250 points per week. Hit a milestone and that part goes in the cart.</li>
-    </ul>
+    <ul class="rules" id="rules"></ul>
+  </section>
+
+  <section class="parent-only">
+    <h2>Settings</h2>
+    <div class="muted">Make it yours: rewards, point values, and the rules. Tap Save when you're done.</div>
+    <label for="s-parent">Grown-up's name</label>
+    <input type="text" id="s-parent" placeholder="Dad" autocomplete="off">
+    <label for="s-tagline">Tagline</label>
+    <input type="text" id="s-tagline" placeholder="Every book earns points." autocomplete="off">
+    <div class="two">
+      <div><label for="s-cap">Weekly cap (0 = none)</label><input type="number" id="s-cap" inputmode="numeric" min="0" step="1"></div>
+      <div><label for="s-bonus">Stretch bonus</label><input type="number" id="s-bonus" inputmode="numeric" min="0" step="1"></div>
+    </div>
+    <label>Book levels (points for a first read)</label>
+    <div id="s-tiers" class="edit-list"></div>
+    <label>Rewards (points needed · name · what it is)</label>
+    <div id="s-ms" class="edit-list"></div>
+    <div class="row"><button class="secondary" id="s-addms" type="button">+ Add reward</button></div>
+    <button class="primary" id="s-save" type="button">Save settings</button>
+    <div class="row"><button class="secondary" id="s-reset" type="button">Reset to defaults</button><button class="secondary" id="share" type="button">Share this app</button></div>
+    <div class="msg" id="s-msg"></div>
   </section>
 
   <section class="parent-only">
     <h2>Backup</h2>
-    <div class="muted">The log lives on this phone only. Save a backup now and then, or move it to another device.</div>
+    <div class="muted">The log and settings live on this phone only. Save a backup now and then, or use one to move everything to another device.</div>
     <div class="row">
       <button class="secondary" id="export" type="button">Save backup</button>
       <button class="secondary" id="import" type="button">Restore backup</button>
@@ -223,38 +241,63 @@ body.parent .log .del{display:block}
 
 <script>
 (function(){
-  const GOAL = 1600, WEEK_CAP = 250;
-  const MILESTONES = [
-    {at:100,  name:"PC case",            desc:"The box that holds it all"},
-    {at:200,  name:"Power supply",       desc:"Gives the parts electricity"},
-    {at:250,  name:"CPU cooler",         desc:"Peerless Assassin with the screen"},
-    {at:700,  name:"CPU + motherboard",  desc:"Ryzen 7 5800XT + ROG Strix B550-F"},
-    {at:850,  name:"SSD 1TB",            desc:"Where the games live"},
-    {at:1100, name:"Corsair RAM 32GB",   desc:"Helps games run smooth"},
-    {at:1600, name:"Graphics card",      desc:"RX 9060 XT — runs BeamNG, Farming Sim, Roblox"},
-  ];
-  const TIER_COLOR = {1:"#7a8aa0",2:"#4f9aa8",5:"#5aa864",10:"#2e8b57",20:"#2f6fb3",40:"#6a3fa0",70:"#e07b1a",100:"#c8402c"};
-  const TIER_HELP = {
-    1:"Tiny books — board books or a few words per page, read out loud on your own",
-    2:"Short picture books you read yourself — Biscuit, Bob Books, Hop on Pop",
-    5:"Longer picture books or level 1–2 readers — Little Bear, Henry and Mudge, Splat the Cat",
-    10:"Easy readers you read all by yourself — Elephant & Piggie, Pete the Cat, Fly Guy",
-    20:"Early chapter books, ~60–100 pages — Magic Tree House, Dog Man, Owl Diaries",
-    40:"Chapter books, ~100–180 pages — Captain Underpants, Wimpy Kid, The Bad Guys",
-    70:"Big chapter books, ~180–250 pages — The Wild Robot, Charlotte's Web",
-    100:"Giant books, 250+ pages — Harry Potter, Percy Jackson, Narnia"
+  const TIER_COLOR = ["#7a8aa0","#4f9aa8","#5aa864","#2e8b57","#2f6fb3","#6a3fa0","#e07b1a","#c8402c"];
+  const DEFAULTS = {
+    parent: "Dad",
+    tagline: "Every book earns points. Points build the PC.",
+    weekCap: 250,
+    bonus: 20,
+    tiers: [
+      {name:"tiny",          pts:1,   help:"Tiny books — board books or a few words per page, read out loud on your own"},
+      {name:"short",         pts:2,   help:"Short picture books you read yourself — Biscuit, Bob Books, Hop on Pop"},
+      {name:"picture",       pts:5,   help:"Longer picture books or level 1–2 readers — Little Bear, Henry and Mudge, Splat the Cat"},
+      {name:"easy",          pts:10,  help:"Easy readers you read all by yourself — Elephant & Piggie, Pete the Cat, Fly Guy"},
+      {name:"early chapter", pts:20,  help:"Early chapter books, ~60–100 pages — Magic Tree House, Dog Man, Owl Diaries"},
+      {name:"chapter",       pts:40,  help:"Chapter books, ~100–180 pages — Captain Underpants, Wimpy Kid, The Bad Guys"},
+      {name:"big",           pts:70,  help:"Big chapter books, ~180–250 pages — The Wild Robot, Charlotte's Web"},
+      {name:"giant",         pts:100, help:"Giant books, 250+ pages — Harry Potter, Percy Jackson, Narnia"}
+    ],
+    milestones: [
+      {at:100,  name:"PC case",            desc:"The box that holds it all"},
+      {at:200,  name:"Power supply",       desc:"Gives the parts electricity"},
+      {at:250,  name:"CPU cooler",         desc:"Peerless Assassin with the screen"},
+      {at:700,  name:"CPU + motherboard",  desc:"Ryzen 7 5800XT + ROG Strix B550-F"},
+      {at:850,  name:"SSD 1TB",            desc:"Where the games live"},
+      {at:1100, name:"Corsair RAM 32GB",   desc:"Helps games run smooth"},
+      {at:1600, name:"Graphics card",      desc:"RX 9060 XT — runs BeamNG, Farming Sim, Roblox"}
+    ]
   };
+  let S = null;                 // live settings
+  const GOAL = () => S.milestones.length ? S.milestones[S.milestones.length-1].at : 0;
 
   const $ = id => document.getElementById(id);
   let books = [];          // {id,title,tier,pts,readNum,bonus,ts}
   let tier = 0;
 
   /* ---------- storage ---------- */
-  const LS_KEY = "reading-reward-books", PIN_KEY = "reading-reward-pin";
+  const LS_KEY = "reading-reward-books", PIN_KEY = "reading-reward-pin", SET_KEY = "reading-reward-settings";
   const lsGet = (k, d) => { try{ const v = localStorage.getItem(k); return v==null ? d : v; }catch(e){ return d; } };
   const lsSet = (k, v) => { try{ localStorage.setItem(k, v); return true; }catch(e){ return false; } };
   function load(){ try{ const a = JSON.parse(lsGet(LS_KEY,"[]")); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
   function save(){ if(!lsSet(LS_KEY, JSON.stringify(books))) toast("Couldn't save on this device"); }
+  const clone = o => JSON.parse(JSON.stringify(o));
+  function cleanSettings(raw){
+    const d = clone(DEFAULTS); if (!raw || typeof raw!=="object") return d;
+    const s = {};
+    s.parent  = typeof raw.parent==="string" && raw.parent.trim() ? raw.parent.trim().slice(0,30) : d.parent;
+    s.tagline = typeof raw.tagline==="string" ? raw.tagline.trim().slice(0,80) : d.tagline;
+    s.weekCap = Number.isFinite(+raw.weekCap) && +raw.weekCap>=0 ? Math.round(+raw.weekCap) : d.weekCap;
+    s.bonus   = Number.isFinite(+raw.bonus) && +raw.bonus>=0 ? Math.round(+raw.bonus) : d.bonus;
+    s.tiers   = d.tiers.map((t,i)=>{ const r = Array.isArray(raw.tiers) && raw.tiers[i]; const p = r && Number.isFinite(+r.pts) && +r.pts>0 ? Math.round(+r.pts) : t.pts; return {name:t.name, pts:p, help:t.help}; });
+    const ms = Array.isArray(raw.milestones) ? raw.milestones
+      .filter(m=>m && typeof m.name==="string" && m.name.trim() && Number.isFinite(+m.at) && +m.at>0)
+      .map(m=>({at:Math.round(+m.at), name:m.name.trim().slice(0,40), desc:(typeof m.desc==="string"?m.desc.trim():"").slice(0,80)}))
+      .sort((a,b)=>a.at-b.at) : [];
+    s.milestones = ms.length ? ms : d.milestones;
+    return s;
+  }
+  function loadSettings(){ try{ return cleanSettings(JSON.parse(lsGet(SET_KEY,"null"))); }catch(e){ return clone(DEFAULTS); } }
+  function saveSettings(){ if(!lsSet(SET_KEY, JSON.stringify(S))) toast("Couldn't save on this device"); }
 
   /* ---------- helpers ---------- */
   const norm = s => s.toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
@@ -262,6 +305,8 @@ body.parent .log .del{display:block}
   const total = () => books.reduce((s,b)=>s+b.pts,0);
   const weekPts = () => { const ws=weekStart(Date.now()); return books.filter(b=>b.ts>=ws).reduce((s,b)=>s+b.pts,0); };
   const fmt = n => n.toLocaleString();
+  // Books store the tier's point value at the time they were logged; map back to a level index for colour.
+  function tierIdx(v){ let best=0, d=Infinity; S.tiers.forEach((t,i)=>{ const dd=Math.abs(t.pts-v); if(dd<d){d=dd;best=i;} }); return best; }
   function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
   let toastTimer;
   function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove("show"),2500); }
@@ -273,12 +318,12 @@ body.parent .log .del{display:block}
     const readNum = t ? books.filter(b=>norm(b.title)===t).length+1 : 1;
     const mult = readNum===1?1:readNum===2?.5:.25;
     let base = Math.round(tier*mult);
-    let bonus = $("bonus").checked ? 20 : 0;
+    let bonus = $("bonus").checked ? S.bonus : 0;
     let raw = base+bonus;
-    const room = Math.max(0, WEEK_CAP-weekPts());
+    const room = S.weekCap>0 ? Math.max(0, S.weekCap-weekPts()) : Infinity;
     const pts = Math.min(raw, room);
     let why = readNum===1?"first read":readNum===2?"2nd read · half points":`read #${readNum} · quarter points`;
-    if (bonus) why += " · +20 bonus";
+    if (bonus) why += ` · +${bonus} bonus`;
     if (pts<raw) why += room===0?" · weekly cap reached":" · trimmed to weekly cap";
     return {pts, readNum, bonus, why};
   }
@@ -287,31 +332,45 @@ body.parent .log .del{display:block}
   function render(){
     const tot = total();
     $("total").textContent = fmt(tot);
+    $("goal").textContent = fmt(GOAL());
+    $("tagline").textContent = S.tagline;
+    $("reportlbl").textContent = `Book report given to ${S.parent}`;
+    $("bonuslbl").textContent = `Stretch bonus — first book from a harder level (+${S.bonus})`;
+    $("weeklbl").textContent = S.weekCap>0 ? `of ${fmt(S.weekCap)} points (resets Monday)` : "points this week (no cap)";
+    const MILESTONES = S.milestones;
     const next = MILESTONES.find(m=>m.at>tot);
     $("nextline").innerHTML = next
       ? `<b>${fmt(next.at-tot)}</b> more points to unlock the <b>${esc(next.name)}</b>`
-      : `<b>You did it!</b> Every part is unlocked. Time to build.`;
+      : `<b>You did it!</b> Every reward is unlocked.`;
     $("milestones").innerHTML = MILESTONES.map(m=>{
       const done = tot>=m.at, isNext = next && next.at===m.at;
       return `<div class="ms ${done?'done':''} ${isNext?'nextup':''}"><div class="box">✓</div><div class="name">${esc(m.name)}<small>${esc(m.desc)}</small></div><div class="at">${done?'unlocked':fmt(m.at)}</div></div>`;
     }).join("");
     const wp = weekPts();
     $("weekpts").textContent = fmt(wp);
-    $("weekfill").style.width = Math.min(100, wp/WEEK_CAP*100)+"%";
+    $("weekfill").style.width = (S.weekCap>0 ? Math.min(100, wp/S.weekCap*100) : 0)+"%";
     const sorted = books.slice().sort((a,b)=>b.ts-a.ts);
     $("log").innerHTML = sorted.length ? sorted.map(b=>{
       const d = new Date(b.ts).toLocaleDateString(undefined,{month:"short",day:"numeric"});
       const rn = b.readNum>1?` · read #${b.readNum}`:"";
-      return `<li data-id="${esc(b.id)}"><span class="dot" style="background:${TIER_COLOR[b.tier]||'#888'}"></span><div class="t"><span>${esc(b.title)}</span><small>${d} · ${b.tier}-pt book${rn}${b.bonus?' · bonus':''}</small></div><div class="p">+${b.pts}</div><button class="del" type="button" title="Remove" aria-label="Remove ${esc(b.title)}">×</button></li>`;
+      return `<li data-id="${esc(b.id)}"><span class="dot" style="background:${TIER_COLOR[tierIdx(b.tier)]}"></span><div class="t"><span>${esc(b.title)}</span><small>${d} · ${b.tier}-pt book${rn}${b.bonus?' · bonus':''}</small></div><div class="p">+${b.pts}</div><button class="del" type="button" title="Remove" aria-label="Remove ${esc(b.title)}">×</button></li>`;
     }).join("") : `<div class="empty">No books yet. Finish one and add it above!</div>`;
+    $("rules").innerHTML = [
+      `Finish the book, then give a 2-minute book report to ${esc(S.parent)}: favorite part, what happened, one thing you'd change.`,
+      `Re-reading pays half. A third read or more pays a quarter.`,
+      S.bonus>0 ? `Stretch bonus: +${S.bonus} the first time you finish a book from a harder level.` : null,
+      `Reading out loud to ${esc(S.parent)} counts in full. Audiobooks alone don't count.`,
+      S.weekCap>0 ? `Max ${fmt(S.weekCap)} points per week. Reach a reward and it's yours.` : `No weekly limit. Reach a reward and it's yours.`
+    ].filter(Boolean).map(r=>`<li>${r}</li>`).join("");
     renderTrack(tot);
     updatePreview();
   }
 
   function renderTrack(tot){
     const W=640, H=150, x0=34, x1=W-34, roadY=92;
-    const px = v => x0 + (x1-x0)*Math.min(1,v/GOAL);
-    let flags = MILESTONES.map((m,i)=>{
+    const goal = GOAL() || 1;
+    const px = v => x0 + (x1-x0)*Math.min(1,v/goal);
+    let flags = S.milestones.map((m,i)=>{
       const x=px(m.at), done=tot>=m.at, up = i%2===0;
       const ly = up? roadY-46 : roadY+46;
       return `<line x1="${x}" y1="${roadY}" x2="${x}" y2="${ly+(up?10:-10)}" stroke="${done?'#2e8b57':'#8a97ad'}" stroke-width="2"/>
@@ -389,11 +448,15 @@ body.parent .log .del{display:block}
   $("changepin").addEventListener("click", setNewPin);
 
   /* ---------- events ---------- */
+  function renderTiers(){
+    $("tiers").innerHTML = S.tiers.map((t,i)=>`<button class="tier t${i}" type="button" data-i="${i}">${t.pts}<small>${esc(t.name)}</small></button>`).join("");
+    tier = 0; $("tierhelp").textContent = "";
+  }
   $("tiers").addEventListener("click", e=>{
     const b = e.target.closest(".tier"); if(!b) return;
-    tier = +b.dataset.v;
+    const t = S.tiers[+b.dataset.i]; tier = t.pts;
     [...$("tiers").children].forEach(x=>x.classList.toggle("on", x===b));
-    $("tierhelp").textContent = TIER_HELP[tier];
+    $("tierhelp").textContent = t.help;
     updatePreview();
   });
   ["input","change"].forEach(ev=>{ $("title").addEventListener(ev,updatePreview); $("bonus").addEventListener(ev,updatePreview); $("report").addEventListener(ev,updatePreview); });
@@ -406,7 +469,7 @@ body.parent .log .del{display:block}
     $("title").value=""; $("bonus").checked=false; $("report").checked=false; tier=0;
     [...$("tiers").children].forEach(x=>x.classList.remove("on")); $("tierhelp").textContent="";
     render();
-    const unlocked = MILESTONES.filter(m=>m.at>before && m.at<=total());
+    const unlocked = S.milestones.filter(m=>m.at>before && m.at<=total());
     if (unlocked.length){ buzz([80,60,80,60,200]); toast(`🎉 Unlocked: ${unlocked.map(m=>m.name).join(", ")}!`); }
     else buzz(40);
     setTimeout(()=>{ $("msg").textContent=""; }, 4000);
@@ -426,9 +489,50 @@ body.parent .log .del{display:block}
     }
   });
 
+  /* ---------- settings editor ---------- */
+  function renderSettings(){
+    $("s-parent").value = S.parent; $("s-tagline").value = S.tagline;
+    $("s-cap").value = S.weekCap; $("s-bonus").value = S.bonus;
+    $("s-tiers").innerHTML = S.tiers.map((t,i)=>`<div class="edit-row"><div class="lvl"><i style="background:${TIER_COLOR[i]}"></i>${esc(t.name)}</div><input type="number" inputmode="numeric" min="1" step="1" value="${t.pts}" data-tier="${i}" aria-label="Points for ${esc(t.name)}"><span></span></div>`).join("");
+    $("s-ms").innerHTML = S.milestones.map(m=>msRow(m)).join("");
+    updateRemoveButtons();
+  }
+  function msRow(m){
+    return `<div class="edit-row ms-row"><input type="number" inputmode="numeric" min="1" step="1" value="${m?m.at:""}" placeholder="pts" aria-label="Points needed"><div class="stack"><input type="text" value="${m?esc(m.name):""}" placeholder="Reward name" maxlength="40" aria-label="Reward name"><input type="text" value="${m?esc(m.desc):""}" placeholder="What it is (optional)" maxlength="80" aria-label="Reward description"></div><button type="button" class="rm" aria-label="Remove reward">×</button></div>`;
+  }
+  function updateRemoveButtons(){ const rows=$("s-ms").querySelectorAll(".ms-row"); rows.forEach(r=>r.querySelector(".rm").disabled = rows.length<=1); }
+  $("s-addms").addEventListener("click", ()=>{ $("s-ms").insertAdjacentHTML("beforeend", msRow(null)); updateRemoveButtons(); $("s-ms").lastElementChild.querySelector("input").focus(); });
+  $("s-ms").addEventListener("click", e=>{ const b=e.target.closest(".rm"); if(!b||b.disabled) return; b.closest(".ms-row").remove(); updateRemoveButtons(); });
+  $("s-save").addEventListener("click", ()=>{
+    const raw = {
+      parent: $("s-parent").value, tagline: $("s-tagline").value, weekCap: $("s-cap").value, bonus: $("s-bonus").value,
+      tiers: [...$("s-tiers").querySelectorAll("input[data-tier]")].map(i=>({pts:i.value})),
+      milestones: [...$("s-ms").querySelectorAll(".ms-row")].map(r=>{ const [at,name,desc]=r.querySelectorAll("input"); return {at:at.value, name:name.value, desc:desc.value}; })
+    };
+    const bad = raw.milestones.filter(m=>!(m.name.trim() && +m.at>0));
+    if (bad.length){ $("s-msg").className="msg warn"; $("s-msg").textContent="Every reward needs a name and points above 0."; return; }
+    S = cleanSettings(raw); saveSettings(); renderSettings(); renderTiers(); render();
+    $("s-msg").className="msg ok"; $("s-msg").textContent="Settings saved."; buzz(40);
+    setTimeout(()=>{ $("s-msg").textContent=""; }, 3000);
+  });
+  let resetArmed = false;
+  $("s-reset").addEventListener("click", ()=>{
+    if (!resetArmed){ resetArmed=true; $("s-reset").textContent="Tap again to reset"; setTimeout(()=>{ resetArmed=false; $("s-reset").textContent="Reset to defaults"; }, 3000); return; }
+    resetArmed=false; $("s-reset").textContent="Reset to defaults";
+    S = clone(DEFAULTS); saveSettings(); renderSettings(); renderTiers(); render(); toast("Back to defaults");
+  });
+  $("share").addEventListener("click", async ()=>{
+    const url = location.origin + location.pathname;
+    const data = {title:"Read. Earn. Build.", text:"A reading reward tracker for kids: books earn points, points unlock rewards. Free, no app store — add it to your home screen.", url};
+    try{
+      if (navigator.share) { await navigator.share(data); return; }
+      await navigator.clipboard.writeText(url); toast("Link copied");
+    }catch(e){ if (e && e.name!=="AbortError") toast(url); }
+  });
+
   /* ---------- backup ---------- */
   $("export").addEventListener("click", ()=>{
-    const blob = new Blob([JSON.stringify({app:"reading-reward",version:1,exported:new Date().toISOString(),books}, null, 2)], {type:"application/json"});
+    const blob = new Blob([JSON.stringify({app:"reading-reward",version:2,exported:new Date().toISOString(),settings:S,books}, null, 2)], {type:"application/json"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `reading-reward-${new Date().toISOString().slice(0,10)}.json`;
@@ -446,14 +550,18 @@ body.parent .log .del{display:block}
         .map(b=>({ id:String(b.id||Date.now().toString(36)+Math.random().toString(36).slice(2,6)), title:b.title, tier:+b.tier||0, pts:Math.round(b.pts), readNum:+b.readNum||1, bonus:b.bonus?20:0, ts:+b.ts }));
       const byId = new Map(books.map(b=>[b.id,b]));
       clean.forEach(b=>byId.set(b.id,b));
-      books = [...byId.values()]; save(); render();
-      toast(`Restored ${clean.length} book${clean.length===1?"":"s"}`);
+      books = [...byId.values()]; save();
+      let note = `Restored ${clean.length} book${clean.length===1?"":"s"}`;
+      if (j.settings && typeof j.settings==="object"){ S = cleanSettings(j.settings); saveSettings(); renderSettings(); renderTiers(); note += " and settings"; }
+      render(); toast(note);
     }catch(err){ toast("That file isn't a Read. Earn. Build. backup"); }
     e.target.value = "";
   });
 
   /* ---------- boot ---------- */
+  S = loadSettings();
   books = load();
+  renderSettings(); renderTiers();
   render();
   const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   $("status").textContent = standalone ? "Saved on this device." : "Tip: add this page to your home screen to use it like an app.";
